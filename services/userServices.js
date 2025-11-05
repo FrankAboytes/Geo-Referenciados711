@@ -1,4 +1,4 @@
-    const faker = require('faker');
+const faker = require('faker');
 
     class UsersService {
     constructor() {
@@ -61,4 +61,5 @@
     }
     }
 
-    module.exports = UsersService;
+    // Exporta la instancia, no la clase
+    module.exports = new UsersService();

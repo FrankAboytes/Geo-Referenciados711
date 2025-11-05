@@ -1,5 +1,5 @@
 ﻿// El único cambio está en la línea de productsRouter
-const { router: productsRouter } = require('./productsRouter'); // Correcto
+const productsRouter = require('./productsRouter'); // Correcto
 const usersRouter = require('./usersRouter');
 const categoriesRouter = require('./categoriesRouter');
 const brandsRouter = require('./brandsRouter');

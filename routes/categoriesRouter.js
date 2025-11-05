@@ -1,23 +1,99 @@
 const express = require('express');
-const CategoriesService = require('../services/categoriesServices');
-
-//  CAMBIO CLAVE 1: Se importa el *servicio* de productos, no el router.
-// La instancia del servicio se exportó desde 'productsRouter.js' para poderla usar aquí.
-const { service: productsService } = require('./productsRouter'); 
+const service = require('../services/categoriesServices'); // Importa la instancia
+const productsService = require('../services/productsServices');
 const router = express.Router();
+// const service = new CategoriesService(); // Ya no se crea aquí
 
-//  CAMBIO CLAVE 2: Se crea una única instancia del servicio de categorías.
-// Esta instancia manejará toda la lógica y los datos.
-const service = new CategoriesService();
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Category:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *           description: El ID autogenerado de la categoría.
+ *           example: 1
+ *         name:
+ *           type: string
+ *           description: El nombre de la categoría.
+ *           example: "Electrónica"
+ *         description:
+ *           type: string
+ *           description: Descripción de la categoría.
+ *           example: "Dispositivos y gadgets electrónicos"
+ *       required:
+ *         - name
+ *         - description
+ *     NewCategory:
+ *       type: object
+ *       properties:
+ *         name:
+ *           type: string
+ *           description: El nombre de la categoría.
+ *           example: "Ropa"
+ *         description:
+ *           type: string
+ *           description: Descripción de la categoría.
+ *           example: "Prendas de vestir y accesorios"
+ *       required:
+ *         - name
+ *         - description
+ */
 
-// --- ENDPOINTS SIMPLIFICADOS ---
-
-// La ruta solo se encarga de recibir la petición y llamar al servicio.
+/**
+ * @swagger
+ * /categories:
+ *   get:
+ *     summary: Obtener todas las categorías
+ *     tags: [Categories]
+ *     responses:
+ *       200:
+ *         description: Una lista de todas las categorías.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Category'
+ */
 router.get('/', (req, res) => {
     const categories = service.getAll();
     res.status(200).json(categories);
 });
 
+/**
+ * @swagger
+ * /categories/{id}:
+ *   get:
+ *     summary: Obtener una categoría por su ID
+ *     tags: [Categories]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: El ID de la categoría a buscar.
+ *     responses:
+ *       200:
+ *         description: Detalles de la categoría encontrada.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Category'
+ *       404:
+ *         description: Categoría no encontrada.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Category not found"
+ */
 router.get('/:id', (req, res) => {
     const { id } = req.params;
     const category = service.getById(id);
@@ -28,6 +104,32 @@ router.get('/:id', (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /categories:
+ *   post:
+ *     summary: Crear una nueva categoría
+ *     tags: [Categories]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/NewCategory'
+ *     responses:
+ *       201:
+ *         description: Categoría creada exitosamente.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "created"
+ *                 data:
+ *                   $ref: '#/components/schemas/Category'
+ */
 router.post('/', (req, res) => {
     const body = req.body;
     const newCategory = service.create(body);
@@ -37,6 +139,57 @@ router.post('/', (req, res) => {
     });
 });
 
+/**
+ * @swagger
+ * /categories/{id}:
+ *   patch:
+ *     summary: Actualizar una categoría existente (parcial)
+ *     tags: [Categories]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: El ID de la categoría a actualizar.
+ *     requestBody:
+ *       description: Campos para actualizar.
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *             example:
+ *               name: "Electrónica y Cómputo"
+ *     responses:
+ *       200:
+ *         description: Categoría actualizada exitosamente.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "updated"
+ *                 data:
+ *                   $ref: '#/components/schemas/Category'
+ *       404:
+ *         description: Categoría no encontrada.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Category not found"
+ */
 router.patch('/:id', (req, res) => {
     try {
         const { id } = req.params;
@@ -47,12 +200,48 @@ router.patch('/:id', (req, res) => {
             data: updatedCategory
         });
     } catch (error) {
-        // Si el servicio lanza un error (ej: categoría no encontrada), se captura aquí.
         res.status(404).json({ message: error.message });
     }
 });
 
-//  CAMBIO CLAVE 3: Lógica de negocio orquestada a través de servicios.
+/**
+ * @swagger
+ * /categories/{id}:
+ *   delete:
+ *     summary: Eliminar una categoría (y sus productos asociados en cascada)
+ *     tags: [Categories]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: El ID de la categoría a eliminar.
+ *     responses:
+ *       200:
+ *         description: Categoría y productos asociados eliminados.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Deleted category and 8 associated products"
+ *                 id:
+ *                   type: string
+ *                   example: "1"
+ *       404:
+ *         description: Categoría no encontrada o error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Category not found"
+ */
 router.delete('/:id', (req, res) => {
     try {
         const { id } = req.params;

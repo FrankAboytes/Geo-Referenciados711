@@ -79,4 +79,5 @@ class ProductsService {
     }
 }
 
-module.exports = ProductsService;
+// Exporta la instancia, no la clase
+module.exports = new ProductsService();
