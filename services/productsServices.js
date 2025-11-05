@@ -1,4 +1,6 @@
 const faker = require("faker");
+const categoriesService = require('./categoriesServices');
+const brandsService = require('./brandsServices');
 
 class ProductsService {
     constructor() {
@@ -7,7 +9,6 @@ class ProductsService {
     } 
 
     generate() {
-        // Usamos una cantidad más pequeña para que sea más fácil de probar la cascada
         const limit = 20; 
         for (let index = 0; index < limit; index++) {
             this.products.push({
@@ -15,7 +16,6 @@ class ProductsService {
                 name: faker.commerce.productName(),
                 price: parseInt(faker.commerce.price()),
                 image: faker.image.imageUrl(),
-                // Asociamos a las categorías y marcas que creamos (IDs 1 a 5)
                 categoryId: faker.datatype.number({ min: 1, max: 5 }),
                 brandId: faker.datatype.number({ min: 1, max: 5 })
             });
@@ -23,6 +23,22 @@ class ProductsService {
     }
 
     create(data){
+        // VALIDACIÓN: Verificar si categoryId existe
+        if (data.categoryId !== undefined) {
+            const categoryExists = categoriesService.getById(data.categoryId);
+            if (!categoryExists) {
+                throw new Error(`Category with id ${data.categoryId} not found`);
+            }
+        }
+
+        // VALIDACIÓN: Verificar si brandId existe
+        if (data.brandId !== undefined) {
+            const brandExists = brandsService.getById(data.brandId);
+            if (!brandExists) {
+                throw new Error(`Brand with id ${data.brandId} not found`);
+            }
+        }
+
         const newProduct = {
             id: faker.datatype.uuid(),
             ...data
@@ -44,6 +60,23 @@ class ProductsService {
         if(index === -1){
             throw new Error('Product not found');
         }
+
+        // VALIDACIÓN: Verificar si categoryId existe
+        if (changes.categoryId !== undefined) {
+            const categoryExists = categoriesService.getById(changes.categoryId);
+            if (!categoryExists) {
+                throw new Error(`Category with id ${changes.categoryId} not found`);
+            }
+        }
+
+        // VALIDACIÓN: Verificar si brandId existe
+        if (changes.brandId !== undefined) {
+            const brandExists = brandsService.getById(changes.brandId);
+            if (!brandExists) {
+                throw new Error(`Brand with id ${changes.brandId} not found`);
+            }
+        }
+
         const product = this.products[index];
         this.products[index] = {
             ...product,
@@ -61,13 +94,11 @@ class ProductsService {
         return { id };
     }
 
-    // --- NUEVOS MÉTODOS PARA BORRADO EN CASCADA ---
+    // --- MÉTODOS PARA BORRADO EN CASCADA ---
     deleteByCategoryId(categoryId) {
         const initialCount = this.products.length;
-        // Filtramos, manteniendo solo los productos que NO coinciden con el categoryId
         this.products = this.products.filter(p => p.categoryId != categoryId);
         const finalCount = this.products.length;
-        // Retornamos cuántos productos se borraron
         return initialCount - finalCount;
     }
 
@@ -79,5 +110,4 @@ class ProductsService {
     }
 }
 
-// Exporta la instancia, no la clase
 module.exports = new ProductsService();
