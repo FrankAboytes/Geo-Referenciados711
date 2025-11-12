@@ -2,6 +2,7 @@
 const routerApi = require('./routes/rutas');
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
+const mongoose = require('mongoose');
 const app = express();
 const port = 3000;
 
@@ -102,4 +103,13 @@ app.listen(port, () => {
   console.log("Server started on port " + port);
   // Mensaje útil para saber dónde ver la documentación
   console.log(`Documentación de API disponible en http://localhost:${port}/api-docs`);
+});
+
+mongoose.connect(
+    'mongodb+srv://FrankoDarko:Flanax.1@loslibrosdeltioflan.nxf1nh3.mongodb.net/?retryWrites=true&w=majority&appname=loslibrosdeltioflan',)
+    .then(() => console.log('Connected to MongoDB'))
+    .catch(err => console.error('Could not connect to MongoDB...', err))
+
+app.listen(4000, () => {
+    console.log('Server running on port 4000'); // (Bonus: buena práctica)
 });

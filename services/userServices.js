@@ -1,65 +1,27 @@
-const faker = require('faker');
+    const User = require('../models/User');
 
     class UsersService {
-    constructor() {
-        this.users = [];
-        this.generate();
+    async getAll() {
+        return await User.find();
     }
 
-    generate() {
-        // GaboytesMtzFrak@gmail.comeneramos 10 usuarios para el ejemplo
-        for (let i = 0; i < 10; i++) {
-        this.users.push({
-            id: i + 1,
-            name: faker.name.findName(),
-            email: faker.internet.email(),
-            avatar: faker.image.avatar()
-        });
-        }
+    async getById(id) {
+        return await User.findById(id);
     }
 
-    getAll() {
-        return this.users;
+    async create(data) {
+        const user = new User(data);
+        return await user.save();
     }
 
-    getById(id) {
-        // Usamos '==' porque el id de los params viene como string
-        return this.users.find(u => u.id == id);
+    async update(id, changes) {
+        return await User.findByIdAndUpdate(id, changes, { new: true });
     }
 
-    create(data) {
-        const newUser = {
-        id: this.users.length + 1,
-        ...data
-        };
-        this.users.push(newUser);
-        return newUser;
-    }
-
-    update(id, changes) {
-        const index = this.users.findIndex(u => u.id == id);
-        if (index === -1) {
-        // O puedes retornar null o un objeto de error
-        throw new Error('User not found'); 
-        }
-        const user = this.users[index];
-        this.users[index] = {
-        ...user,
-        ...changes
-        };
-        return this.users[index];
-    }
-
-    delete(id) {
-        const index = this.users.findIndex(u => u.id == id);
-        if (index === -1) {
-        throw new Error('User not found');
-        }
-        this.users.splice(index, 1);
-        // Retornamos el id para confirmar la eliminación
+    async delete(id) {
+        await User.findByIdAndDelete(id);
         return { id };
     }
     }
 
-    // Exporta la instancia, no la clase
     module.exports = new UsersService();

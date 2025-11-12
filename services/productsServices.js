@@ -1,113 +1,74 @@
-const faker = require("faker");
-const categoriesService = require('./categoriesServices');
-const brandsService = require('./brandsServices');
+    const Product = require('../models/Product');
+    const Category = require('../models/Category');
+    const Brand = require('../models/Brand');
 
-class ProductsService {
-    constructor() {
-        this.products = [];
-        this.generate();
-    } 
-
-    generate() {
-        const limit = 20; 
-        for (let index = 0; index < limit; index++) {
-            this.products.push({
-                id: faker.datatype.uuid(),
-                name: faker.commerce.productName(),
-                price: parseInt(faker.commerce.price()),
-                image: faker.image.imageUrl(),
-                categoryId: faker.datatype.number({ min: 1, max: 5 }),
-                brandId: faker.datatype.number({ min: 1, max: 5 })
-            });
-        }
+    class ProductsService {
+    async getAll() {
+        return await Product.find()
+        .populate('categoryId')
+        .populate('brandId');
     }
 
-    create(data){
-        // VALIDACIÓN: Verificar si categoryId existe
-        if (data.categoryId !== undefined) {
-            const categoryExists = categoriesService.getById(data.categoryId);
-            if (!categoryExists) {
-                throw new Error(`Category with id ${data.categoryId} not found`);
-            }
-        }
-
-        // VALIDACIÓN: Verificar si brandId existe
-        if (data.brandId !== undefined) {
-            const brandExists = brandsService.getById(data.brandId);
-            if (!brandExists) {
-                throw new Error(`Brand with id ${data.brandId} not found`);
-            }
-        }
-
-        const newProduct = {
-            id: faker.datatype.uuid(),
-            ...data
-        };
-        this.products.push(newProduct);
-        return newProduct;
+    async getById(id) {
+        return await Product.findById(id)
+        .populate('categoryId')
+        .populate('brandId');
     }
 
-    getAll(){
-        return this.products;
+    async create(data) {
+        // Validar que la categoría existe
+        const categoryExists = await Category.findById(data.categoryId);
+        if (!categoryExists) {
+        throw new Error(`Category with id ${data.categoryId} not found`);
+        }
+
+        // Validar que la marca existe
+        const brandExists = await Brand.findById(data.brandId);
+        if (!brandExists) {
+        throw new Error(`Brand with id ${data.brandId} not found`);
+        }
+
+        const product = new Product(data);
+        return await product.save();
     }
 
-    getById(id){
-        return this.products.find(item => item.id === id);
+    async update(id, changes) {
+        // Validar que la categoría existe si se está actualizando
+        if (changes.categoryId) {
+        const categoryExists = await Category.findById(changes.categoryId);
+        if (!categoryExists) {
+            throw new Error(`Category with id ${changes.categoryId} not found`);
+        }
+        }
+
+        // Validar que la marca existe si se está actualizando
+        if (changes.brandId) {
+        const brandExists = await Brand.findById(changes.brandId);
+        if (!brandExists) {
+            throw new Error(`Brand with id ${changes.brandId} not found`);
+        }
+        }
+
+        return await Product.findByIdAndUpdate(id, changes, { new: true })
+        .populate('categoryId')
+        .populate('brandId');
     }
 
-    update(id, changes){
-        const index = this.products.findIndex(item => item.id === id);
-        if(index === -1){
-            throw new Error('Product not found');
-        }
-
-        // VALIDACIÓN: Verificar si categoryId existe
-        if (changes.categoryId !== undefined) {
-            const categoryExists = categoriesService.getById(changes.categoryId);
-            if (!categoryExists) {
-                throw new Error(`Category with id ${changes.categoryId} not found`);
-            }
-        }
-
-        // VALIDACIÓN: Verificar si brandId existe
-        if (changes.brandId !== undefined) {
-            const brandExists = brandsService.getById(changes.brandId);
-            if (!brandExists) {
-                throw new Error(`Brand with id ${changes.brandId} not found`);
-            }
-        }
-
-        const product = this.products[index];
-        this.products[index] = {
-            ...product,
-            ...changes
-        };
-        return this.products[index];
-    }
-
-    delete(id){
-        const index = this.products.findIndex(p => p.id == id);
-        if (index === -1) {
-            throw new Error('Product not found');
-        }
-        this.products.splice(index, 1);
+    async delete(id) {
+        await Product.findByIdAndDelete(id);
         return { id };
     }
 
-    // --- MÉTODOS PARA BORRADO EN CASCADA ---
-    deleteByCategoryId(categoryId) {
-        const initialCount = this.products.length;
-        this.products = this.products.filter(p => p.categoryId != categoryId);
-        const finalCount = this.products.length;
-        return initialCount - finalCount;
+    // Métodos para borrado en cascada
+    async deleteByCategoryId(categoryId) {
+        const result = await Product.deleteMany({ categoryId });
+        return result.deletedCount;
     }
 
-    deleteByBrandId(brandId) {
-        const initialCount = this.products.length;
-        this.products = this.products.filter(p => p.brandId != brandId);
-        const finalCount = this.products.length;
-        return initialCount - finalCount;
+    async deleteByBrandId(brandId) {
+        const result = await Product.deleteMany({ brandId });
+        return result.deletedCount;
     }
-}
+    }
 
-module.exports = new ProductsService();
+    module.exports = new ProductsService();

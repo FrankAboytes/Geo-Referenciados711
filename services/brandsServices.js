@@ -1,57 +1,27 @@
-const faker = require('faker');
+    const Brand = require('../models/Brand');
 
     class BrandsService {
-    constructor() {
-        this.brands = [];
-        this.generate();
+    async getAll() {
+        return await Brand.find();
     }
 
-    generate() {
-        for (let i = 0; i < 5; i++) {
-        this.brands.push({
-            id: i + 1,
-            name: faker.company.companyName(),
-            logo: faker.image.business()
-        });
-        }
+    async getById(id) {
+        return await Brand.findById(id);
     }
 
-    getAll() {
-        return this.brands;
+    async create(data) {
+        const brand = new Brand(data);
+        return await brand.save();
     }
 
-    getById(id) {
-        return this.brands.find(b => b.id == id);
+    async update(id, changes) {
+        return await Brand.findByIdAndUpdate(id, changes, { new: true });
     }
 
-    create(data) {
-        const newBrand = {
-        id: this.brands.length + 1,
-        ...data
-        };
-        this.brands.push(newBrand);
-        return newBrand;
-    }
-
-    update(id, changes) {
-        const index = this.brands.findIndex(b => b.id == id);
-        if (index === -1) {
-        throw new Error('Brand not found');
-        }
-        const brand = this.brands[index];
-        this.brands[index] = { ...brand, ...changes };
-        return this.brands[index];
-    }
-
-    delete(id) {
-        const index = this.brands.findIndex(b => b.id == id);
-        if (index === -1) {
-        throw new Error('Brand not found');
-        }
-        this.brands.splice(index, 1);
+    async delete(id) {
+        await Brand.findByIdAndDelete(id);
         return { id };
     }
     }
 
-    // Exporta la instancia, no la clase
     module.exports = new BrandsService();

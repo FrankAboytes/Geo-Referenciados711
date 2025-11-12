@@ -1,59 +1,27 @@
-const faker = require('faker');
+    const Category = require('../models/Category');
 
-class CategoriesService {
-    constructor() {
-        this.categories = [];
-        this.generate();
+    class CategoriesService {
+    async getAll() {
+        return await Category.find();
     }
 
-    generate() {
-        for (let i = 0; i < 5; i++) {
-            this.categories.push({
-                id: i + 1,
-                name: faker.commerce.department(),
-                description: faker.lorem.sentence()
-            });
-        }
+    async getById(id) {
+        return await Category.findById(id);
     }
 
-    getAll() {
-        return this.categories;
+    async create(data) {
+        const category = new Category(data);
+        return await category.save();
     }
 
-    getById(id) {
-        return this.categories.find(c => c.id == id);
+    async update(id, changes) {
+        return await Category.findByIdAndUpdate(id, changes, { new: true });
     }
 
-    create(data) {
-        const newCategory = {
-            id: this.categories.length + 1,
-            ...data
-        };
-        this.categories.push(newCategory);
-        return newCategory;
-    }
-
-    update(id, changes) {
-        const index = this.categories.findIndex(c => c.id == id);
-        if (index === -1) {
-            throw new Error('Category not found');
-        }
-        const category = this.categories[index];
-        this.categories[index] = { 
-            ...category, 
-            ...changes 
-        };
-        return this.categories[index];
-    }
-
-    delete(id) {
-        const index = this.categories.findIndex(c => c.id == id);
-        if (index === -1) {
-            throw new Error('Category not found');
-        }
-        this.categories.splice(index, 1);
+    async delete(id) {
+        await Category.findByIdAndDelete(id);
         return { id };
     }
-}
+    }
 
-module.exports = new CategoriesService();
+    module.exports = new CategoriesService();
