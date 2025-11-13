@@ -1,14 +1,48 @@
 const express = require('express');
-
-// 1. Importa la CLASE del nuevo servicio
 const MoviesServices = require('../services/moviesServices'); 
-
-// 2. Crea la INSTANCIA del servicio
 const service = new MoviesServices(); 
-
 const router = express.Router();
 
-// --- SE ELIMINA EL ARRAY ESTÁTICO 'let movies = [...]' ---
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Movie:
+ *       type: object
+ *       properties:
+ *         _id:
+ *           type: string
+ *           description: El ID único de MongoDB (ObjectId).
+ *           example: "60d5f1b9b6e4b30015b1e1a1"
+ *         id:
+ *           type: string
+ *           description: El ID único de MongoDB (ObjectId).
+ *           example: "60d5f1b9b6e4b30015b1e1a1"
+ *         title:
+ *           type: string
+ *           description: El título de la película.
+ *           example: "Inception"
+ *         director:
+ *           type: string
+ *           description: El director de la película.
+ *           example: "Christopher Nolan"
+ *         year:
+ *           type: integer
+ *           description: El año de lanzamiento.
+ *           example: 2010
+ *         genre:
+ *           type: string
+ *           description: El género de la película.
+ *           example: "Sci-Fi"
+ *         duration:
+ *           type: integer
+ *           description: Duración en minutos.
+ *           example: 148
+ *       required:
+ *         - title
+ *         - director
+ *         - year
+ */
 
 /**
  * @swagger
@@ -28,7 +62,7 @@ const router = express.Router();
  */
 router.get('/', async (req, res) => {
     try {
-        const allMovies = await service.find();
+        const allMovies = await service.getAll();
         res.json(allMovies);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -47,7 +81,8 @@ router.get('/', async (req, res) => {
  *         schema:
  *           type: string
  *         required: true
- *         description: El ID de la película.
+ *         description: El ID de la película (ObjectId de MongoDB).
+ *         example: "60d5f1b9b6e4b30015b1e1a1"
  *     responses:
  *       200:
  *         description: Detalles de la película.
@@ -99,7 +134,6 @@ router.post('/', async (req, res) => {
         const newMovie = await service.create(body);
         res.status(201).json(newMovie);
     } catch (error) {
-        // Manejo de errores (como los de validación de Mongoose)
         res.status(400).json({ 
             message: error.message, 
             errors: error.errors 
@@ -119,7 +153,8 @@ router.post('/', async (req, res) => {
  *         schema:
  *           type: string
  *         required: true
- *         description: El ID de la película a actualizar.
+ *         description: El ID de la película a actualizar (ObjectId de MongoDB).
+ *         example: "60d5f1b9b6e4b30015b1e1a1"
  *     requestBody:
  *       required: true
  *       content:
@@ -167,7 +202,8 @@ router.patch('/:id', async (req, res) => {
  *         schema:
  *           type: string
  *         required: true
- *         description: El ID de la película a eliminar.
+ *         description: El ID de la película a eliminar (ObjectId de MongoDB).
+ *         example: "60d5f1b9b6e4b30015b1e1a1"
  *     responses:
  *       200:
  *         description: Película eliminada exitosamente.

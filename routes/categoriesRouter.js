@@ -1,8 +1,7 @@
 const express = require('express');
-const service = require('../services/categoriesServices'); // Importa la instancia
+const service = require('../services/categoriesServices');
 const productsService = require('../services/productsServices');
 const router = express.Router();
-// const service = new CategoriesService(); // Ya no se crea aquí
 
 /**
  * @swagger
@@ -11,10 +10,14 @@ const router = express.Router();
  *     Category:
  *       type: object
  *       properties:
+ *         _id:
+ *           type: string
+ *           description: El ID único de MongoDB (ObjectId).
+ *           example: "60d5f1b9b6e4b30015b1e1a1"
  *         id:
- *           type: integer
- *           description: El ID autogenerado de la categoría.
- *           example: 1
+ *           type: string
+ *           description: El ID único de MongoDB (ObjectId).
+ *           example: "60d5f1b9b6e4b30015b1e1a1"
  *         name:
  *           type: string
  *           description: El nombre de la categoría.
@@ -58,8 +61,8 @@ const router = express.Router();
  *               items:
  *                 $ref: '#/components/schemas/Category'
  */
-router.get('/', (req, res) => {
-    const categories = service.getAll();
+router.get('/',async (req, res) => {
+    const categories = await service.getAll();
     res.status(200).json(categories);
 });
 
@@ -75,7 +78,8 @@ router.get('/', (req, res) => {
  *         schema:
  *           type: string
  *         required: true
- *         description: El ID de la categoría a buscar.
+ *         description: El ID de la categoría a buscar (ObjectId de MongoDB).
+ *         example: "60d5f1b9b6e4b30015b1e1a1"
  *     responses:
  *       200:
  *         description: Detalles de la categoría encontrada.
@@ -94,9 +98,9 @@ router.get('/', (req, res) => {
  *                   type: string
  *                   example: "Category not found"
  */
-router.get('/:id', (req, res) => {
+router.get('/:id', async (req, res) => {
     const { id } = req.params;
-    const category = service.getById(id);
+    const category = await service.getById(id);
     if(category) {
         res.status(200).json(category);
     } else {
@@ -130,9 +134,9 @@ router.get('/:id', (req, res) => {
  *                 data:
  *                   $ref: '#/components/schemas/Category'
  */
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
     const body = req.body;
-    const newCategory = service.create(body);
+    const newCategory = await service.create(body);
     res.status(201).json({
         message: 'created',
         data: newCategory
@@ -151,7 +155,8 @@ router.post('/', (req, res) => {
  *         schema:
  *           type: string
  *         required: true
- *         description: El ID de la categoría a actualizar.
+ *         description: El ID de la categoría a actualizar (ObjectId de MongoDB).
+ *         example: "60d5f1b9b6e4b30015b1e1a1"
  *     requestBody:
  *       description: Campos para actualizar.
  *       required: true
@@ -190,11 +195,11 @@ router.post('/', (req, res) => {
  *                   type: string
  *                   example: "Category not found"
  */
-router.patch('/:id', (req, res) => {
+router.patch('/:id', async (req, res) => {
     try {
         const { id } = req.params;
         const body = req.body;
-        const updatedCategory = service.update(id, body);
+        const updatedCategory = await service.update(id, body);
         res.status(200).json({
             message: 'updated',
             data: updatedCategory
@@ -216,7 +221,8 @@ router.patch('/:id', (req, res) => {
  *         schema:
  *           type: string
  *         required: true
- *         description: El ID de la categoría a eliminar.
+ *         description: El ID de la categoría a eliminar (ObjectId de MongoDB).
+ *         example: "60d5f1b9b6e4b30015b1e1a1"
  *     responses:
  *       200:
  *         description: Categoría y productos asociados eliminados.
@@ -230,7 +236,7 @@ router.patch('/:id', (req, res) => {
  *                   example: "Deleted category and 8 associated products"
  *                 id:
  *                   type: string
- *                   example: "1"
+ *                   example: "60d5f1b9b6e4b30015b1e1a1"
  *       404:
  *         description: Categoría no encontrada o error.
  *         content:
@@ -242,17 +248,13 @@ router.patch('/:id', (req, res) => {
  *                   type: string
  *                   example: "Category not found"
  */
-router.delete('/:id', (req, res) => {
+router.delete('/:id', async (req, res) => {
     try {
         const { id } = req.params;
         
-        // 1. La ruta le pide al servicio de categorías que elimine la categoría.
-        const result = service.delete(id);
-        
-        // 2. La ruta le pide al servicio de productos que elimine los productos asociados.
+        const result = await service.delete(id);
         const deletedProductsCount = productsService.deleteByCategoryId(id);
 
-        // 3. La ruta construye y envía la respuesta final al cliente.
         res.status(200).json({ 
             message: `Deleted category and ${deletedProductsCount} associated products`,
             id: result.id

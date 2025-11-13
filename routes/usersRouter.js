@@ -1,7 +1,6 @@
 const express = require('express');
-const service = require('../services/userServices'); // Importa la instancia
+const service = require('../services/userServices');
 const router = express.Router();
-// const service = new UsersService(); // Ya no se crea aquí
 
 /**
  * @swagger
@@ -10,10 +9,14 @@ const router = express.Router();
  *     User:
  *       type: object
  *       properties:
+ *         _id:
+ *           type: string
+ *           description: El ID único de MongoDB (ObjectId).
+ *           example: "60d5f1b9b6e4b30015b1e1a1"
  *         id:
- *           type: integer
- *           description: El ID autogenerado del usuario.
- *           example: 1
+ *           type: string
+ *           description: El ID único de MongoDB (ObjectId).
+ *           example: "60d5f1b9b6e4b30015b1e1a1"
  *         name:
  *           type: string
  *           description: El nombre del usuario.
@@ -65,8 +68,8 @@ const router = express.Router();
  *               items:
  *                 $ref: '#/components/schemas/User'
  */
-router.get('/', (req, res) => {
-  const users = service.getAll();
+router.get('/', async (req, res) => {
+  const users = await service.getAll();
   res.status(200).json(users);
 });
 
@@ -82,7 +85,8 @@ router.get('/', (req, res) => {
  *         schema:
  *           type: string
  *         required: true
- *         description: El ID del usuario a buscar.
+ *         description: El ID del usuario a buscar (ObjectId de MongoDB).
+ *         example: "60d5f1b9b6e4b30015b1e1a1"
  *     responses:
  *       200:
  *         description: Detalles del usuario encontrado.
@@ -101,9 +105,9 @@ router.get('/', (req, res) => {
  *                   type: string
  *                   example: "User not found"
  */
-router.get('/:id', (req, res) => {
+router.get('/:id', async (req, res) => {
   const { id } = req.params;
-  const user = service.getById(id);
+  const user = await service.getById(id);
   if (user) {
     res.status(200).json(user);
   } else {
@@ -137,9 +141,9 @@ router.get('/:id', (req, res) => {
  *                 data:
  *                   $ref: '#/components/schemas/User'
  */
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   const body = req.body;
-  const newUser = service.create(body);
+  const newUser = await service.create(body);
   res.status(201).json({
     message: 'created',
     data: newUser
@@ -158,7 +162,8 @@ router.post('/', (req, res) => {
  *         schema:
  *           type: string
  *         required: true
- *         description: El ID del usuario a actualizar.
+ *         description: El ID del usuario a actualizar (ObjectId de MongoDB).
+ *         example: "60d5f1b9b6e4b30015b1e1a1"
  *     requestBody:
  *       description: Campos para actualizar. Solo se actualizarán los campos enviados.
  *       required: true
@@ -200,11 +205,11 @@ router.post('/', (req, res) => {
  *                   type: string
  *                   example: "User not found"
  */
-router.patch('/:id', (req, res) => {
+router.patch('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const body = req.body;
-    const updatedUser = service.update(id, body);
+    const updatedUser = await service.update(id, body);
     res.status(200).json({
       message: 'updated',
       data: updatedUser
@@ -226,7 +231,8 @@ router.patch('/:id', (req, res) => {
  *         schema:
  *           type: string
  *         required: true
- *         description: El ID del usuario a eliminar.
+ *         description: El ID del usuario a eliminar (ObjectId de MongoDB).
+ *         example: "60d5f1b9b6e4b30015b1e1a1"
  *     responses:
  *       200:
  *         description: Usuario eliminado exitosamente.
@@ -240,7 +246,7 @@ router.patch('/:id', (req, res) => {
  *                   example: "deleted"
  *                 id:
  *                   type: string
- *                   example: "1"
+ *                   example: "60d5f1b9b6e4b30015b1e1a1"
  *       404:
  *         description: Usuario no encontrado.
  *         content:
@@ -252,13 +258,13 @@ router.patch('/:id', (req, res) => {
  *                   type: string
  *                   example: "User not found"
  */
-router.delete('/:id', (req, res) => {
+router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const result = service.delete(id);
+    const result = await service.delete(id);
     res.status(200).json({
       message: 'deleted',
-      ...result
+      id: result.id
     });
   } catch (error) {
     res.status(404).json({ message: error.message });

@@ -1,28 +1,56 @@
-const Movie = require('../models/movies'); // <-- Importa el NUEVO modelo
+const Movie = require('../models/movies');
 
 class MoviesServices {
-
-  async create(data) {
-    const newMovie = new Movie(data);
-    await newMovie.save();
-    return newMovie;
-  }
-
-  async find() {
-    return await Movie.find();
+  async getAll() {
+    try {
+      const movies = await Movie.find();
+      return movies;
+    } catch (error) {
+      throw new Error(`Error getting movies: ${error.message}`);
+    }
   }
 
   async findOne(id) {
-    return await Movie.findById(id);
+    try {
+      const movie = await Movie.findById(id);
+      return movie;
+    } catch (error) {
+      throw new Error(`Error getting movie: ${error.message}`);
+    }
   }
 
-  async update(id, changes) {
-    return await Movie.findByIdAndUpdate(id, changes, { new: true });
+  async create(movieData) {
+    try {
+      const movie = new Movie(movieData);
+      const savedMovie = await movie.save();
+      return savedMovie;
+    } catch (error) {
+      throw new Error(`Error creating movie: ${error.message}`);
+    }
+  }
+
+  async update(id, updateData) {
+    try {
+      const movie = await Movie.findByIdAndUpdate(
+        id,
+        updateData,
+        { new: true, runValidators: true }
+      );
+      
+      return movie;
+    } catch (error) {
+      throw new Error(`Error updating movie: ${error.message}`);
+    }
   }
 
   async delete(id) {
-    return await Movie.findByIdAndDelete(id);
+    try {
+      const movie = await Movie.findByIdAndDelete(id);
+      return movie;
+    } catch (error) {
+      throw new Error(`Error deleting movie: ${error.message}`);
+    }
   }
 }
 
-module.exports = MoviesServices;
+module.exports = MoviesServices;  

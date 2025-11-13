@@ -2,25 +2,66 @@
 
     class CategoriesService {
     async getAll() {
-        return await Category.find();
+        try {
+        const categories = await Category.find();
+        return categories;
+        } catch (error) {
+        throw new Error(`Error getting categories: ${error.message}`);
+        }
     }
 
     async getById(id) {
-        return await Category.findById(id);
+        try {
+        const category = await Category.findById(id);
+        if (!category) {
+            throw new Error('Category not found');
+        }
+        return category;
+        } catch (error) {
+        throw new Error(`Error getting category: ${error.message}`);
+        }
     }
 
-    async create(data) {
-        const category = new Category(data);
-        return await category.save();
+    async create(categoryData) {
+        try {
+        const category = new Category(categoryData);
+        const savedCategory = await category.save();
+        return savedCategory;
+        } catch (error) {
+        throw new Error(`Error creating category: ${error.message}`);
+        }
     }
 
-    async update(id, changes) {
-        return await Category.findByIdAndUpdate(id, changes, { new: true });
+    async update(id, updateData) {
+        try {
+        const category = await Category.findByIdAndUpdate(
+            id,
+            updateData,
+            { new: true, runValidators: true }
+        );
+        
+        if (!category) {
+            throw new Error('Category not found');
+        }
+        
+        return category;
+        } catch (error) {
+        throw new Error(`Error updating category: ${error.message}`);
+        }
     }
 
     async delete(id) {
-        await Category.findByIdAndDelete(id);
-        return { id };
+        try {
+        const category = await Category.findByIdAndDelete(id);
+        
+        if (!category) {
+            throw new Error('Category not found');
+        }
+        
+        return category;
+        } catch (error) {
+        throw new Error(`Error deleting category: ${error.message}`);
+        }
     }
     }
 

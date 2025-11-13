@@ -1,34 +1,99 @@
-    // services/productsServices.js
+    const Product = require('../models/Product');
 
-    // const { faker } = require('@faker-js/faker'); // <-- ELIMINA FAKER
-    const Product = require('../models/Product'); // <-- IMPORTA TU MODELO
-
-    class ProductsServices {
-
-    // constructor() {} // <-- YA NO SE NECESITA EL CONSTRUCTOR DE FAKER
-
-    async create(data) {
-        // 'data' es el 'req.body' que viene de la ruta
-        const newProduct = new Product(data);
-        await newProduct.save(); // <-- ¡AQUÍ ES DONDE GUARDA EN MONGODB!
-        return newProduct;
+    class ProductsService {
+    async getAll() {
+        try {
+        const products = await Product.find()
+            .populate('categoryId')
+            .populate('brandId');
+        return products;
+        } catch (error) {
+        throw new Error(`Error getting products: ${error.message}`);
+        }
     }
 
-    async find() {
-        return await Product.find(); // <-- Busca en la BD
+    async getById(id) {
+        try {
+        const product = await Product.findById(id)
+            .populate('categoryId')
+            .populate('brandId');
+        
+        if (!product) {
+            throw new Error('Product not found');
+        }
+        
+        return product;
+        } catch (error) {
+        throw new Error(`Error getting product: ${error.message}`);
+        }
     }
 
-    async findOne(id) {
-        return await Product.findById(id); // <-- Busca por ID en la BD
+    async create(productData) {
+        try {
+        const product = new Product(productData);
+        const savedProduct = await product.save();
+        
+        // Populate para obtener los datos completos
+        const populatedProduct = await Product.findById(savedProduct._id)
+            .populate('categoryId')
+            .populate('brandId');
+        
+        return populatedProduct;
+        } catch (error) {
+        throw new Error(`Error creating product: ${error.message}`);
+        }
     }
 
-    async update(id, changes) {
-        return await Product.findByIdAndUpdate(id, changes, { new: true }); // <-- Actualiza en la BD
+    async update(id, updateData) {
+        try {
+        const product = await Product.findByIdAndUpdate(
+            id,
+            updateData,
+            { new: true, runValidators: true }
+        ).populate('categoryId')
+        .populate('brandId');
+        
+        if (!product) {
+            throw new Error('Product not found');
+        }
+        
+        return product;
+        } catch (error) {
+        throw new Error(`Error updating product: ${error.message}`);
+        }
     }
 
     async delete(id) {
-        return await Product.findByIdAndDelete(id); // <-- Borra de la BD
+        try {
+        const product = await Product.findByIdAndDelete(id);
+        
+        if (!product) {
+            throw new Error('Product not found');
+        }
+        
+        return product;
+        } catch (error) {
+        throw new Error(`Error deleting product: ${error.message}`);
+        }
+    }
+
+    async deleteByCategoryId(categoryId) {
+        try {
+        const result = await Product.deleteMany({ categoryId });
+        return result.deletedCount;
+        } catch (error) {
+        throw new Error(`Error deleting products by category: ${error.message}`);
+        }
+    }
+
+    async deleteByBrandId(brandId) {
+        try {
+        const result = await Product.deleteMany({ brandId });
+        return result.deletedCount;
+        } catch (error) {
+        throw new Error(`Error deleting products by brand: ${error.message}`);
+        }
     }
     }
 
-    module.exports = ProductsServices;
+    module.exports = new ProductsService();

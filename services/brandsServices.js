@@ -2,25 +2,66 @@
 
     class BrandsService {
     async getAll() {
-        return await Brand.find();
+        try {
+        const brands = await Brand.find();
+        return brands;
+        } catch (error) {
+        throw new Error(`Error getting brands: ${error.message}`);
+        }
     }
 
     async getById(id) {
-        return await Brand.findById(id);
+        try {
+        const brand = await Brand.findById(id);
+        if (!brand) {
+            throw new Error('Brand not found');
+        }
+        return brand;
+        } catch (error) {
+        throw new Error(`Error getting brand: ${error.message}`);
+        }
     }
 
-    async create(data) {
-        const brand = new Brand(data);
-        return await brand.save();
+    async create(brandData) {
+        try {
+        const brand = new Brand(brandData);
+        const savedBrand = await brand.save();
+        return savedBrand;
+        } catch (error) {
+        throw new Error(`Error creating brand: ${error.message}`);
+        }
     }
 
-    async update(id, changes) {
-        return await Brand.findByIdAndUpdate(id, changes, { new: true });
+    async update(id, updateData) {
+        try {
+        const brand = await Brand.findByIdAndUpdate(
+            id,
+            updateData,
+            { new: true, runValidators: true }
+        );
+        
+        if (!brand) {
+            throw new Error('Brand not found');
+        }
+        
+        return brand;
+        } catch (error) {
+        throw new Error(`Error updating brand: ${error.message}`);
+        }
     }
 
     async delete(id) {
-        await Brand.findByIdAndDelete(id);
-        return { id };
+        try {
+        const brand = await Brand.findByIdAndDelete(id);
+        
+        if (!brand) {
+            throw new Error('Brand not found');
+        }
+        
+        return brand;
+        } catch (error) {
+        throw new Error(`Error deleting brand: ${error.message}`);
+        }
     }
     }
 

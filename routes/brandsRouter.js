@@ -1,13 +1,7 @@
 const express = require('express');
-// CAMBIO 1: Importar la INSTANCIA del servicio
 const service = require('../services/brandsServices');
-
-// CAMBIO 2: Importar el servicio de productos para el borrado en cascada
 const productsService = require('../services/productsServices');
 const router = express.Router();
-
-// CAMBIO 3: Eliminar la creación de la instancia local
-// const service = new BrandsService();
 
 /**
  * @swagger
@@ -16,10 +10,14 @@ const router = express.Router();
  *     Brand:
  *       type: object
  *       properties:
+ *         _id:
+ *           type: string
+ *           description: El ID único de MongoDB (ObjectId).
+ *           example: "60d5f1b9b6e4b30015b1e1a1"
  *         id:
- *           type: integer
- *           description: El ID autogenerado de la marca.
- *           example: 1
+ *           type: string
+ *           description: El ID único de MongoDB (ObjectId).
+ *           example: "60d5f1b9b6e4b30015b1e1a1"
  *         name:
  *           type: string
  *           description: El nombre de la marca.
@@ -63,8 +61,8 @@ const router = express.Router();
  *               items:
  *                 $ref: '#/components/schemas/Brand'
  */
-router.get('/', (req, res) => {
-    const brands = service.getAll();
+router.get('/', async (req, res) => {
+    const brands = await service.getAll();
     res.status(200).json(brands);
 });
 
@@ -80,7 +78,8 @@ router.get('/', (req, res) => {
  *         schema:
  *           type: string
  *         required: true
- *         description: El ID de la marca a buscar.
+ *         description: El ID de la marca a buscar (ObjectId de MongoDB).
+ *         example: "60d5f1b9b6e4b30015b1e1a1"
  *     responses:
  *       200:
  *         description: Detalles de la marca encontrada.
@@ -99,9 +98,9 @@ router.get('/', (req, res) => {
  *                   type: string
  *                   example: "Brand not found"
  */
-router.get('/:id', (req, res) => {
+router.get('/:id', async (req, res) => {
     const { id } = req.params;
-    const brand = service.getById(id);
+    const brand = await service.getById(id);
     if (brand) {
         res.status(200).json(brand);
     } else {
@@ -135,9 +134,9 @@ router.get('/:id', (req, res) => {
  *                 data:
  *                   $ref: '#/components/schemas/Brand'
  */
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
     const body = req.body;
-    const newBrand = service.create(body);
+    const newBrand = await service.create(body);
     res.status(201).json({
         message: 'created',
         data: newBrand
@@ -156,7 +155,8 @@ router.post('/', (req, res) => {
  *         schema:
  *           type: string
  *         required: true
- *         description: El ID de la marca a actualizar.
+ *         description: El ID de la marca a actualizar (ObjectId de MongoDB).
+ *         example: "60d5f1b9b6e4b30015b1e1a1"
  *     requestBody:
  *       description: Campos para actualizar.
  *       required: true
@@ -195,17 +195,16 @@ router.post('/', (req, res) => {
  *                   type: string
  *                   example: "Brand not found"
  */
-router.patch('/:id', (req, res) => {
+router.patch('/:id', async (req, res) => {
     try {
         const { id } = req.params;
         const body = req.body;
-        const updatedBrand = service.update(id, body);
+        const updatedBrand = await service.update(id, body);
         res.status(200).json({
             message: 'updated',
             data: updatedBrand
         });
     } catch (error) {
-        // CORREGIDO: Cambiado 444 a 404, que es el estándar para 'Not Found'
         res.status(404).json({ message: error.message });
     }
 });
@@ -222,7 +221,8 @@ router.patch('/:id', (req, res) => {
  *         schema:
  *           type: string
  *         required: true
- *         description: El ID de la marca a eliminar.
+ *         description: El ID de la marca a eliminar (ObjectId de MongoDB).
+ *         example: "60d5f1b9b6e4b30015b1e1a1"
  *     responses:
  *       200:
  *         description: Marca y productos asociados eliminados.
@@ -236,7 +236,7 @@ router.patch('/:id', (req, res) => {
  *                   example: "Deleted brand and 5 associated products"
  *                 id:
  *                   type: string
- *                   example: "3"
+ *                   example: "60d5f1b9b6e4b30015b1e1a1"
  *       404:
  *         description: Marca no encontrada.
  *         content:
@@ -248,17 +248,13 @@ router.patch('/:id', (req, res) => {
  *                   type: string
  *                   example: "Brand not found"
  */
-router.delete('/:id', (req, res) => {
+router.delete('/:id', async (req, res) => {
     try {
         const { id } = req.params;
         
-        // 1. Pide al servicio de marcas que elimine la marca.
-        const result = service.delete(id);
-        
-        // 2. Pide al servicio de productos que elimine los productos de esa marca.
+        const result = await service.delete(id);
         const deletedProductsCount = productsService.deleteByBrandId(id);
 
-        // 3. Envía una respuesta consolidada.
         res.status(200).json({ 
             message: `Deleted brand and ${deletedProductsCount} associated products`,
             id: result.id
