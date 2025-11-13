@@ -1,74 +1,34 @@
-    const Product = require('../models/Products');
-    const Category = require('../models/Category');
-    const Brand = require('../models/Brand');
+    // services/productsServices.js
 
-    class ProductsService {
-    async getAll() {
-        return await Product.find()
-        .populate('categoryId')
-        .populate('brandId');
-    }
+    // const { faker } = require('@faker-js/faker'); // <-- ELIMINA FAKER
+    const Product = require('../models/Product'); // <-- IMPORTA TU MODELO
 
-    async getById(id) {
-        return await Product.findById(id)
-        .populate('categoryId')
-        .populate('brandId');
-    }
+    class ProductsServices {
+
+    // constructor() {} // <-- YA NO SE NECESITA EL CONSTRUCTOR DE FAKER
 
     async create(data) {
-        // Validar que la categoría existe
-        const categoryExists = await Category.findById(data.categoryId);
-        if (!categoryExists) {
-        throw new Error(`Category with id ${data.categoryId} not found`);
-        }
+        // 'data' es el 'req.body' que viene de la ruta
+        const newProduct = new Product(data);
+        await newProduct.save(); // <-- ¡AQUÍ ES DONDE GUARDA EN MONGODB!
+        return newProduct;
+    }
 
-        // Validar que la marca existe
-        const brandExists = await Brand.findById(data.brandId);
-        if (!brandExists) {
-        throw new Error(`Brand with id ${data.brandId} not found`);
-        }
+    async find() {
+        return await Product.find(); // <-- Busca en la BD
+    }
 
-        const product = new Product(data);
-        return await product.save();
+    async findOne(id) {
+        return await Product.findById(id); // <-- Busca por ID en la BD
     }
 
     async update(id, changes) {
-        // Validar que la categoría existe si se está actualizando
-        if (changes.categoryId) {
-        const categoryExists = await Category.findById(changes.categoryId);
-        if (!categoryExists) {
-            throw new Error(`Category with id ${changes.categoryId} not found`);
-        }
-        }
-
-        // Validar que la marca existe si se está actualizando
-        if (changes.brandId) {
-        const brandExists = await Brand.findById(changes.brandId);
-        if (!brandExists) {
-            throw new Error(`Brand with id ${changes.brandId} not found`);
-        }
-        }
-
-        return await Product.findByIdAndUpdate(id, changes, { new: true })
-        .populate('categoryId')
-        .populate('brandId');
+        return await Product.findByIdAndUpdate(id, changes, { new: true }); // <-- Actualiza en la BD
     }
 
     async delete(id) {
-        await Product.findByIdAndDelete(id);
-        return { id };
-    }
-
-    // Métodos para borrado en cascada
-    async deleteByCategoryId(categoryId) {
-        const result = await Product.deleteMany({ categoryId });
-        return result.deletedCount;
-    }
-
-    async deleteByBrandId(brandId) {
-        const result = await Product.deleteMany({ brandId });
-        return result.deletedCount;
+        return await Product.findByIdAndDelete(id); // <-- Borra de la BD
     }
     }
 
-    module.exports = new ProductsService();
+    module.exports = ProductsServices;

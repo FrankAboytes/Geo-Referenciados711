@@ -1,5 +1,6 @@
 ﻿    const express = require('express');
-    const service = require('../services/productsServices'); // Servicio correcto
+    const ProductsServices = require('../services/productsServices'); // 1. Importa la CLASE
+    const service = new ProductsServices(); // 2. Crea una INSTANCIA de la clase    
     const router = express.Router();
 
     /**
